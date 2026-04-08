@@ -127,13 +127,7 @@
   <h2 id="title">Login</h2>
 
   <input type="email" id="email" placeholder="Email">
-  <div style="position: relative;">
-  <input type="password" id="password" placeholder="Password" style="padding-right:40px;">
-  <span onclick="togglePassword()" 
-        style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;">
-    👁️
-  </span>
-</div>
+ <input type="password" id="password" placeholder="Password">
 
   <button class="main" onclick="handleAuth()" id="mainBtn">Login</button>
 
@@ -226,10 +220,6 @@ function phoneLogin() {
     .then(() => showMsg("Phone login successful ✅"))
     .catch(e => showMsg(e.message, "yellow"));
 
-  function togglePassword() {
-  const pass = document.getElementById("password");
-  pass.type = pass.type === "password" ? "text" : "password";
-}
 </script>
 
 </body>
