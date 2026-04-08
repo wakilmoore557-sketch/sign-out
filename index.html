@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Firebase Auth</title>
+
+  <!-- ✅ Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    input {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 95%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .signin { background: #4CAF50; }
+    .google { background: #DB4437; }
+
+    #msg {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>Login</h2>
+
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+
+  <button class="signin" onclick="login()">Sign In</button>
+  <button class="google" onclick="googleLogin()">Sign in with Google</button>
+
+  <p id="msg"></p>
+</div>
+
+<script>
+  // 🔥 YOUR REAL CONFIG (already added)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBzk8AryQPB6q3MOBKTNwA2wjjFlmAbanY",
+    authDomain: "sign-and-login-b0ca1.firebaseapp.com",
+    projectId: "sign-and-login-b0ca1",
+    storageBucket: "sign-and-login-b0ca1.firebasestorage.app",
+    messagingSenderId: "1008527063684",
+    appId: "1:1008527063684:web:96a489d7168adc2f7a20d1"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  function showMsg(text, color="green") {
+    const msg = document.getElementById("msg");
+    msg.innerText = text;
+    msg.style.color = color;
+  }
+
+  function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => {
+        showMsg("Sign in successful ✅");
+      })
+      .catch((error) => {
+        showMsg(error.message, "red");
+      });
+  }
+
+  function googleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    auth.signInWithPopup(provider)
+      .then(() => {
+        showMsg("Google sign in successful ✅");
+      })
+      .catch((error) => {
+        showMsg(error.message, "red");
+      });
+  }
+</script>
+
+</body>
+</html>
