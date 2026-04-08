@@ -1,119 +1,225 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Firebase Auth</title>
+  <title>Auth System</title>
 
-  <!-- ✅ Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <style>
-    body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
       font-family: Arial;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    body {
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      background: linear-gradient(-45deg, #667eea, #764ba2, #6a11cb, #2575fc);
+      background-size: 400% 400%;
+      animation: bgMove 10s ease infinite;
+    }
+
+    @keyframes bgMove {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
     }
 
     .box {
-      background: white;
+      width: 340px;
       padding: 30px;
       border-radius: 20px;
-      width: 320px;
+      backdrop-filter: blur(15px);
+      background: rgba(255,255,255,0.15);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      color: white;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    h2 {
+      margin-bottom: 15px;
     }
 
     input {
-      width: 90%;
+      width: 100%;
       padding: 12px;
-      margin: 10px 0;
+      margin: 8px 0;
       border-radius: 10px;
-      border: 1px solid #ccc;
+      border: none;
+      outline: none;
     }
 
     button {
-      width: 95%;
+      width: 100%;
       padding: 12px;
       margin-top: 10px;
       border: none;
       border-radius: 10px;
-      color: white;
-      font-weight: bold;
       cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
     }
 
-    .signin { background: #4CAF50; }
-    .google { background: #DB4437; }
+    .main {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      color: white;
+    }
+
+    .main:hover {
+      transform: scale(1.05);
+    }
+
+    .google {
+      background: #DB4437;
+      color: white;
+    }
+
+    .phone {
+      background: #222;
+      color: white;
+    }
+
+    .google:hover,
+    .phone:hover {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+
+    a {
+      display: block;
+      margin-top: 10px;
+      color: #fff;
+      cursor: pointer;
+      text-decoration: underline;
+    }
 
     #msg {
-      margin-top: 15px;
+      margin-top: 10px;
       font-weight: bold;
     }
+
+    .fade {
+      animation: fadeSwitch 0.5s ease;
+    }
+
+    @keyframes fadeSwitch {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
   </style>
 </head>
 <body>
 
-<div class="box">
-  <h2>Login</h2>
+<div class="box fade" id="card">
+
+  <h2 id="title">Login</h2>
 
   <input type="email" id="email" placeholder="Email">
   <input type="password" id="password" placeholder="Password">
 
-  <button class="signin" onclick="login()">Sign In</button>
-  <button class="google" onclick="googleLogin()">Sign in with Google</button>
+  <button class="main" onclick="handleAuth()" id="mainBtn">Login</button>
 
+  <a onclick="toggleMode()" id="toggleText">
+    Don't have an account? Sign Up
+  </a>
+
+  <hr style="margin:15px 0;">
+
+  <button class="google" onclick="googleLogin()">Continue with Google</button>
+  <button class="phone" onclick="phoneLogin()">Continue with Phone</button>
+
+  <div id="recaptcha"></div>
   <p id="msg"></p>
+
 </div>
 
 <script>
-  // 🔥 YOUR REAL CONFIG (already added)
-  const firebaseConfig = {
-    apiKey: "AIzaSyBzk8AryQPB6q3MOBKTNwA2wjjFlmAbanY",
-    authDomain: "sign-and-login-b0ca1.firebaseapp.com",
-    projectId: "sign-and-login-b0ca1",
-    storageBucket: "sign-and-login-b0ca1.firebasestorage.app",
-    messagingSenderId: "1008527063684",
-    appId: "1:1008527063684:web:96a489d7168adc2f7a20d1"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyBzk8AryQPB6q3MOBKTNwA2wjjFlmAbanY",
+  authDomain: "sign-and-login-b0ca1.firebaseapp.com",
+  projectId: "sign-and-login-b0ca1",
+  appId: "1:1008527063684:web:96a489d7168adc2f7a20d1"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
-  function showMsg(text, color="green") {
-    const msg = document.getElementById("msg");
-    msg.innerText = text;
-    msg.style.color = color;
+let isLogin = true;
+
+window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha');
+
+function showMsg(msg, color="white") {
+  const el = document.getElementById("msg");
+  el.innerText = msg;
+  el.style.color = color;
+}
+
+function toggleMode() {
+  isLogin = !isLogin;
+
+  document.getElementById("card").classList.remove("fade");
+  void document.getElementById("card").offsetWidth;
+  document.getElementById("card").classList.add("fade");
+
+  document.getElementById("title").innerText = isLogin ? "Login" : "Sign Up";
+  document.getElementById("mainBtn").innerText = isLogin ? "Login" : "Sign Up";
+
+  document.getElementById("toggleText").innerText = isLogin
+    ? "Don't have an account? Sign Up"
+    : "Already have an account? Login";
+}
+
+function handleAuth() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    showMsg("Fill all fields", "yellow");
+    return;
   }
 
-  function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
+  if (isLogin) {
     auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
-        showMsg("Sign in successful ✅");
-      })
-      .catch((error) => {
-        showMsg(error.message, "red");
-      });
+      .then(() => showMsg("Login successful ✅"))
+      .catch(e => showMsg(e.message, "yellow"));
+  } else {
+    auth.createUserWithEmailAndPassword(email, password)
+      .then(() => showMsg("Account created ✅"))
+      .catch(e => showMsg(e.message, "yellow"));
   }
+}
 
-  function googleLogin() {
-    const provider = new firebase.auth.GoogleAuthProvider();
+function googleLogin() {
+  const provider = new firebase.auth.GoogleAuthProvider();
 
-    auth.signInWithPopup(provider)
-      .then(() => {
-        showMsg("Google sign in successful ✅");
-      })
-      .catch((error) => {
-        showMsg(error.message, "red");
-      });
-  }
+  auth.signInWithPopup(provider)
+    .then(() => showMsg("Google login successful ✅"))
+    .catch(e => showMsg(e.message, "yellow"));
+}
+
+function phoneLogin() {
+  const number = prompt("Enter phone number (+234...)");
+
+  auth.signInWithPhoneNumber(number, window.recaptchaVerifier)
+    .then(result => {
+      const code = prompt("Enter OTP");
+      return result.confirm(code);
+    })
+    .then(() => showMsg("Phone login successful ✅"))
+    .catch(e => showMsg(e.message, "yellow"));
+}
 </script>
 
 </body>
